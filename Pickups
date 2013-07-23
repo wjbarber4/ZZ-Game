@@ -1,0 +1,49 @@
+import java.awt.*;
+import java.awt.image.ImageObserver;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.imageio.ImageIO;
+
+
+public class Pickup implements ImageObserver {
+
+  private int pickupX, pickupY, weaponKey;
+
+	public Pickup()
+	{
+		pickupX = (int) ((Math.random() * 600) + 10);
+		pickupY = (int) ((Math.random() * 600) + 10);
+		weaponKey = 0;
+	}
+
+	public String getWeapon()
+	{
+		if(weaponKey == 0)
+		{
+			return "Shotgun";
+		}
+		else
+			return null;
+	}
+
+
+	public void paintBuffer(Graphics pane)throws IOException{
+		if(weaponKey == 0)
+		{
+			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+			InputStream input = classLoader.getResourceAsStream("Shotgun.png");
+			Image weapon = ImageIO.read(input);    
+			pane.setColor(Color.BLACK);
+			pane.drawImage(weapon, pickupX, pickupY, this);
+		}
+	}
+
+	@Override
+	public boolean imageUpdate(Image arg0, int arg1, int arg2, int arg3,
+			int arg4, int arg5) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+}
