@@ -36,15 +36,15 @@ public class Field extends DoubleBuffer
 	private Sprite[] baddie = new Baddies[200];
 	private Projectile[] bullet = new Projectile[50];
 	private Credits[] credits = new Credits[7];
-	private Pickup newPickup; // can cange
-	
+	private Pickup newPickup = new Pickup(); // can cange
+
 	public static void main(String[] args)
 	{
 		System.out.println("Hi");
 		map = new Field();
 		System.out.println("Bye");
 	}
-		
+
 	public Field(){
 		super();
 		setTitle("Wes's but partly Sean's Game for You");	//	We set the characteristics of our
@@ -59,12 +59,12 @@ public class Field extends DoubleBuffer
 
 		int x = 170;
 		int y = 50;
-		
+
 		firstMap = new Map();
-		
-	
-		
-		
+
+
+
+
 		startButton = new Abutton("Start", Color.green, x, y);
 		x+=100;
 		y+=100;
@@ -89,13 +89,13 @@ public class Field extends DoubleBuffer
 	{
 		player.handMap(firstMap);
 	}
-	
+
 	public void beginAction(){
 		System.out.println("helllllo?");
 		alarm = new Alarm(this);
 		//music();
 		repaint();
-		
+
 	}
 
 	/**takeNotice is what happens every time the alarm goes off
@@ -110,18 +110,19 @@ public class Field extends DoubleBuffer
 		for(int i = 0; i<bullet.length;i++){
 			if(bullet[i] !=null)bullet[i].act(player.getXVelocity(),player.getYVelocity()
 					,player.getMapScrollX(),player.getMapScrollY());
-		}
+	}
 		for(int i = 0; i<baddie.length;i++){
 			if(baddie[i] !=null)baddie[i].act(player.getX(),player.getY()
 					,player.getXVelocity(),player.getYVelocity()
 					,player.getMapScrollX(),player.getMapScrollY());
 		}
 		generateEnemies();
+		generateDrops();
 		checkHit();
-		
+
 	repaint();}
 	}
-	
+
 	private void generateEnemies(){
 		for(int i = 0; i<=(score/20)+1;i++){
 			if(baddie[i] == null){
@@ -131,11 +132,19 @@ public class Field extends DoubleBuffer
 				if(spawn>0.25)baddie[i] = new Baddies(-10,(int)(spawn*1000));
 				if(spawn>0.5)baddie[i] = new Baddies((int)(spawn*1000),750);
 				if(spawn>0.75)baddie[i] = new Baddies(850,(int)(spawn*1000));
+
+
 				
-				
-				newPickup = new Pickup();
 				//System.out.println((int)(spawn*1000));
-		}}}
+		}}
+		
+		
+	}
+	
+	private void generateDrops(){
+		if(newPickup ==null)newPickup = new Pickup();
+		
+	}
 	/**Sees if anything hits anything else
 	 * like walls 
 	 * 
@@ -161,11 +170,11 @@ public class Field extends DoubleBuffer
 		if(player.getY()<BORDERY+30){
 			player.setYVelocity(0);
 			player.setY(BORDERY+30);}
-		
-		
+
+
 		for(int i=0;i<baddie.length;i++){
 			if(baddie[i]!=null){
-				
+
 			for(int q = 0; q<bullet.length;q++){
 				if(bullet[q]!= null && baddie[i]!=null
 						&& bullet[q].getX()> baddie[i].getX()
@@ -197,12 +206,12 @@ public class Field extends DoubleBuffer
 								&& player.getX()<(baddie[i].getX()+ 20)
 								&& player.getY()+35<(baddie[i].getY()+ 30)
 								&& player.getY()+35>baddie[i].getY())		
-		
+
 								)
-			
-				
+
+
 				{
-					
+
 						player.hitHp(baddie[i].getValue());
 						if(baddie[i].getXVelocity()>0) baddie[i].setX(baddie[i].getX()-20);
 						if(baddie[i].getXVelocity()<0) baddie[i].setX(baddie[i].getX()+20);
@@ -210,28 +219,28 @@ public class Field extends DoubleBuffer
 						if(baddie[i].getYVelocity()<0) baddie[i].setY(baddie[i].getY()+20);
 						baddie[i].setXVelocity(0);
 						baddie[i].setYVelocity(0);
-		
-					
-					
+
+
+
 					//System.out.println(player.getHp());
 					if(player.getHp()<=0){
 						//System.out.println(player.getHp());
 						player.setX(0);
 						player.setHp(10);
-						
+
 					}
-					
-					
+
+
 				}
 			}
 			}
-			
-			
-			
+
+
+
 		}
-		
+
 		}
-	
+
 	public void startAction()
 	{	
 		if (running == true){
@@ -248,7 +257,7 @@ public class Field extends DoubleBuffer
 	}
 
 	public void optionsAction(){
-		
+
 	}
 	public void creditsAction(){
 		//each one is a new line
@@ -267,13 +276,13 @@ public class Field extends DoubleBuffer
 		double xDiff,yDiff;
 		xDiff =player.getX()-lastX;
 		yDiff =player.getY()-lastY;
-		
+
 		double total = (xDiff*xDiff)+ (yDiff*yDiff);
-		
+
 		vX =(5*((xDiff)/Math.sqrt(total)));
 		vY =(5*((yDiff)/Math.sqrt(total)));
-		
-		
+
+
 		for(int i = 0; i<bullet.length;i++){
 			if(bullet[i] == null){
 				bullet[i] = new Projectile(player.getX(),player.getY());
@@ -281,7 +290,7 @@ public class Field extends DoubleBuffer
 				bullet[i].setYVelocity(vY*-1);
 				i=bullet.length;
 				makePewPew();
-				
+
 				}
 		}
 	}
@@ -324,7 +333,7 @@ public class Field extends DoubleBuffer
 	    catch (LineUnavailableException ex) {
 	        ex.printStackTrace();
 	    }
-	    
+
 	//System.out.println("pew");
 }
 	private void check()
@@ -339,7 +348,7 @@ public class Field extends DoubleBuffer
 		if (creditsButton.isInside(lastX, lastY) && !pressedStart) {
 			creditsAction();
 			}
-		
+
 		if(world.isInside(lastX,lastY)){
 			if(pressedStart)fireAction();
 		}
@@ -350,23 +359,23 @@ public class Field extends DoubleBuffer
       
 		repaint();
 	}
-	
-	
+
+
 	/**
 	 * 				PAINT IS HERE
 	 */
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
+
+
+
 	public void paintBuffer(Graphics pane){
 		pane.setColor(Color.BLACK);
 		pane.drawRect(BORDERX,BORDERY,BORDERW,BORDERL);
@@ -416,13 +425,13 @@ public class Field extends DoubleBuffer
 				credits[i].paintBuffer(pane);
 			if((i+1)<credits.length && credits[i+1]!=null)credits[i+1].act();
 			}
-			
-			
-			
-			
-			
-			
-			
+
+
+
+
+
+
+
 		}
 		if(pressedStart){
 			if(firstMap != null)
@@ -453,30 +462,31 @@ public class Field extends DoubleBuffer
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 			
-			if(newPickup != null)
-				try {
-					newPickup.paintBuffer(pane);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
 		}
+		if(newPickup != null){
+			try {
+				newPickup.paintBuffer(pane);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}}
 		pane.setFont( new Font( "Monospaced", Font.BOLD, 24 ) );
 		pane.drawString(""+score+"",50,50);
-		
-		
+
+
 		}
-		
+
 	}
-	
-	
-	
 
 
-	
-	
-	
+
+
+
+
+
+
 //	mouseClicked:	invoked when the mouse button is pressed and released at the
 //					same location.
 //	mousePressed:	invoked when the mouse button is pressed down
@@ -513,7 +523,7 @@ public class Field extends DoubleBuffer
 		repaint();
 	}
 
-	
+
 	/**How do? This is supposed to listen for keyboard action
 	 * 
 	 */
@@ -541,10 +551,10 @@ public class Field extends DoubleBuffer
 	    }
 	    if (key == KeyEvent.VK_P) {
 	    	pause=true;
-	    	
+
 	    }if (key == KeyEvent.VK_ENTER) {
 	    	pause=false;
-	    	
+
 	    }
 		//repaint();
 	}
@@ -571,12 +581,12 @@ public class Field extends DoubleBuffer
 	    if (key == KeyEvent.VK_S) {
 	    	player.setYVelocity(0);
 	    }
-		
+
 	}
 
 	@Override
 	public void keyTyped(KeyEvent arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }
