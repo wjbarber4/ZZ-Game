@@ -1,0 +1,592 @@
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Frame;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+import java.net.*;
+import java.io.*;
+import java.net.URL;
+import javax.sound.sampled.*;
+
+/**
+ * 
+ * @author Wes Barber
+ *
+ */
+public class Field extends DoubleBuffer
+    			implements	MouseListener,	//		from the mouse
+								AlarmListener,
+								KeyListener
+{
+	private Map firstMap;
+	private Alarm alarm;			//	We use an alarm to wake us up
+	private UneFenetre myWindow = new UneFenetre();	//	A handle on the window
+
+	private Abutton startButton,world,optionsButton,creditsButton;	//	Two buttons to stop & go
+	final int BORDERX=0,BORDERY=0,BORDERW=800,BORDERL=780;
+	private int delay = 15;
+	private int lastX, lastY,score=0;
+	private static Field map;
+	private boolean running,pressedStart = false,pause=false,showCredits=false;
+	private Sprite player;
+	private Sprite[] baddie = new Baddies[200];
+	private Projectile[] bullet = new Projectile[50];
+	private Credits[] credits = new Credits[7];
+	private Pickup newPickup = new Pickup(); // can cange
+
+	public static void main(String[] args)
+	{
+		System.out.println("Hi");
+		map = new Field();
+		System.out.println("Bye");
+	}
+
+	public Field(){
+		super();
+		setTitle("Wes's but partly Sean's Game for You");	//	We set the characteristics of our
+		setLocation(500, 50);				//		drawing window
+		setSize(BORDERW, BORDERL);
+		setResizable(false);
+		setBackground(Color.lightGray);
+		setVisible(true);					//		and we make it appear
+		addWindowListener(myWindow);		//	To check on the window
+		addMouseListener(this);				//		and on the mouse
+		addKeyListener(this);				//		and on the keyboard
+
+		int x = 170;
+		int y = 50;
+
+		firstMap = new Map();
+
+
+
+
+		startButton = new Abutton("Start", Color.green, x, y);
+		x+=100;
+		y+=100;
+		optionsButton = new Abutton("Options", Color.green, x, y);
+		x+=100;
+		y+=100;
+		creditsButton = new Abutton("Credits", Color.green, x, y);
+		/**
+		 * Essentially a big hidden button for the legal zone for clicking
+		 * 
+		 */
+		world = new Abutton("world", Color.WHITE, BORDERX, BORDERY,BORDERW,BORDERL);
+		alarm = new Alarm(this);						//	We are not using any alarm yet
+											//		(in other words, we are not 
+		running = false;
+		player = new Sprite(100,200);
+		mapHander();
+		repaint();
+	}
+
+	public void mapHander()
+	{
+		player.handMap(firstMap);
+	}
+
+	public void beginAction(){
+		System.out.println("helllllo?");
+		alarm = new Alarm(this);
+		//music();
+		repaint();
+
+	}
+
+	/**takeNotice is what happens every time the alarm goes off
+	 * it moves the ball objects, and checks if the game should be over
+	 */
+	public void takeNotice(){
+		//System.out.println("notice");
+		if(pause == false){
+		//	System.out.println("ME");
+		player.act();
+		//System.out.println(player.getY());
+		for(int i = 0; i<bullet.length;i++){
+			if(bullet[i] !=null)bullet[i].act(player.getXVelocity(),player.getYVelocity()
+					,player.getMapScrollX(),player.getMapScrollY());
+	}
+		for(int i = 0; i<baddie.length;i++){
+			if(baddie[i] !=null)baddie[i].act(player.getX(),player.getY()
+					,player.getXVelocity(),player.getYVelocity()
+					,player.getMapScrollX(),player.getMapScrollY());
+		}
+		generateEnemies();
+		generateDrops();
+		checkHit();
+
+	repaint();}
+	}
+
+	private void generateEnemies(){
+		for(int i = 0; i<=(score/20)+1;i++){
+			if(baddie[i] == null){
+				double spawn = Math.random();
+				//System.out.println(spawn);
+				if(spawn>0.0)baddie[i] = new Baddies((int)(spawn*1000),-10);
+				if(spawn>0.25)baddie[i] = new Baddies(-10,(int)(spawn*1000));
+				if(spawn>0.5)baddie[i] = new Baddies((int)(spawn*1000),750);
+				if(spawn>0.75)baddie[i] = new Baddies(850,(int)(spawn*1000));
+
+
+				
+				//System.out.println((int)(spawn*1000));
+		}}
+		
+		
+	}
+	
+	private void generateDrops(){
+		if(newPickup ==null)newPickup = new Pickup();
+		
+	}
+	/**Sees if anything hits anything else
+	 * like walls 
+	 * 
+	 */
+	public void checkHit(){
+		for(int i = 0; i<bullet.length;i++){
+			if(bullet[i]!=null){
+			if(bullet[i].getX() > BORDERX+BORDERW
+					|| bullet[i].getX() < BORDERX
+					|| bullet[i].getY() > BORDERY+BORDERL
+					|| bullet[i].getY() < BORDERY
+					)bullet[i]=null;
+		}}
+		if(player.getX()>BORDERX+BORDERW-34){
+				player.setXVelocity(0);
+				player.setX(BORDERX+BORDERW-34);}
+		if(player.getX()<BORDERX){
+			player.setXVelocity(0);
+			player.setX(BORDERX);}
+		if(player.getY()>BORDERY+BORDERL-35){
+			player.setYVelocity(0);
+			player.setY(BORDERY+BORDERL-35);}
+		if(player.getY()<BORDERY+30){
+			player.setYVelocity(0);
+			player.setY(BORDERY+30);}
+
+
+		for(int i=0;i<baddie.length;i++){
+			if(baddie[i]!=null){
+
+			for(int q = 0; q<bullet.length;q++){
+				if(bullet[q]!= null && baddie[i]!=null
+						&& bullet[q].getX()> baddie[i].getX()
+						&& bullet[q].getX()<(baddie[i].getX()+ 20)
+						&& bullet[q].getY()<(baddie[i].getY()+ 30)
+						&& bullet[q].getY()>baddie[i].getY()){
+							baddie[i].hitHp(bullet[q].getDamage());
+							bullet[q]=null;
+							if(baddie[i].getHp()<=0){
+								score += baddie[i].getValue();
+								baddie[i] =null;
+							}
+							//score++;
+						}
+				else if(baddie[i]!=null && player !=null
+						&& player.getX()> baddie[i].getX()
+						&& player.getX()<(baddie[i].getX()+ 20)
+						&& player.getY()<(baddie[i].getY()+ 30)
+						&& player.getY()>baddie[i].getY()
+						||(baddie[i]!=null && player.getX()+34> baddie[i].getX()
+								&& player.getX()+34<(baddie[i].getX()+ 20)
+								&& player.getY()<(baddie[i].getY()+ 30)
+								&& player.getY()>baddie[i].getY())
+						||(baddie[i]!=null && player.getX()+34> baddie[i].getX()
+								&& player.getX()+34<(baddie[i].getX()+ 20)
+								&& player.getY()+35<(baddie[i].getY()+ 30)
+								&& player.getY()+35>baddie[i].getY())
+						||(baddie[i]!=null && player.getX()> baddie[i].getX()
+								&& player.getX()<(baddie[i].getX()+ 20)
+								&& player.getY()+35<(baddie[i].getY()+ 30)
+								&& player.getY()+35>baddie[i].getY())		
+
+								)
+
+
+				{
+
+						player.hitHp(baddie[i].getValue());
+						if(baddie[i].getXVelocity()>0) baddie[i].setX(baddie[i].getX()-20);
+						if(baddie[i].getXVelocity()<0) baddie[i].setX(baddie[i].getX()+20);
+						if(baddie[i].getYVelocity()>0) baddie[i].setY(baddie[i].getY()-20);
+						if(baddie[i].getYVelocity()<0) baddie[i].setY(baddie[i].getY()+20);
+						baddie[i].setXVelocity(0);
+						baddie[i].setYVelocity(0);
+
+
+
+					//System.out.println(player.getHp());
+					if(player.getHp()<=0){
+						//System.out.println(player.getHp());
+						player.setX(0);
+						player.setHp(10);
+
+					}
+
+
+				}
+			}
+			}
+
+
+
+		}
+
+		}
+
+	public void startAction()
+	{	
+		if (running == true){
+			//alarm = new Alarm(this);
+			//running = false;
+			//for(int i = 0; i<bullet.length;i++) bullet[i]=null;
+		}
+		else{	running = true;	
+			alarm.setPeriod(delay);	//the delay
+			alarm.setRunning(running);//passes running to alarm
+			alarm.start();}  //starts the alarm
+		pressedStart = true;
+		//music();
+	}
+
+	public void optionsAction(){
+
+	}
+	public void creditsAction(){
+		//each one is a new line
+		credits[0] = new Credits("Wes and that Sean Don kid");
+		//credits[1] = new Credits("Second test for letters");
+		showCredits=true;
+		//sean = new Credits();
+	}
+	/** sets xy velocity for the 'bullet'
+	 * will shoot to the mouse press from the
+	 * player sprite
+	 * 
+	 */
+	public void fireAction(){
+		double vX=1,vY=1;
+		double xDiff,yDiff;
+		xDiff =player.getX()-lastX;
+		yDiff =player.getY()-lastY;
+
+		double total = (xDiff*xDiff)+ (yDiff*yDiff);
+
+		vX =(5*((xDiff)/Math.sqrt(total)));
+		vY =(5*((yDiff)/Math.sqrt(total)));
+
+
+		for(int i = 0; i<bullet.length;i++){
+			if(bullet[i] == null){
+				bullet[i] = new Projectile(player.getX(),player.getY());
+				bullet[i].setXVelocity(vX*-1);
+				bullet[i].setYVelocity(vY*-1);
+				i=bullet.length;
+				makePewPew();
+
+				}
+		}
+	}
+	public void music(){
+		try {
+			URL url = this.getClass().getClassLoader().getResource("MozartMusic.wav");
+	        AudioInputStream sound = AudioSystem.getAudioInputStream(url);
+	        Clip clip = AudioSystem.getClip();
+	        clip.open(sound);
+
+	        clip.setFramePosition(0);
+	        clip.loop(2);
+	    } 
+	    catch (UnsupportedAudioFileException ex) {
+	        ex.printStackTrace();
+	    } 
+	    catch (IOException ex) {
+	        ex.printStackTrace();
+	    } 
+	    catch (LineUnavailableException ex) {
+	        ex.printStackTrace();
+	    }
+	}
+	public void makePewPew(){
+		try {
+			URL url = this.getClass().getClassLoader().getResource("Pew.wav");
+	        AudioInputStream sound = AudioSystem.getAudioInputStream(url);
+	        Clip clip = AudioSystem.getClip();
+	        clip.open(sound);
+
+	        clip.setFramePosition(0);
+	        clip.start();
+	    } 
+	    catch (UnsupportedAudioFileException ex) {
+	        ex.printStackTrace();
+	    } 
+	    catch (IOException ex) {
+	        ex.printStackTrace();
+	    } 
+	    catch (LineUnavailableException ex) {
+	        ex.printStackTrace();
+	    }
+
+	//System.out.println("pew");
+}
+	private void check()
+	{
+
+		if (startButton.isInside(lastX, lastY) && !pressedStart) {
+			startAction();
+			}
+		if (optionsButton.isInside(lastX, lastY) && !pressedStart) {
+			optionsAction();
+			}
+		if (creditsButton.isInside(lastX, lastY) && !pressedStart) {
+			creditsAction();
+			}
+
+		if(world.isInside(lastX,lastY)){
+			if(pressedStart)fireAction();
+		}
+
+		else  {
+			System.out.println("What?");
+		}
+      
+		repaint();
+	}
+
+
+	/**
+	 * 				PAINT IS HERE
+	 */
+
+
+
+
+
+
+
+
+
+
+
+
+	public void paintBuffer(Graphics pane){
+		pane.setColor(Color.BLACK);
+		pane.drawRect(BORDERX,BORDERY,BORDERW,BORDERL);
+		setBackground(Color.lightGray);
+		//startButton.paintBuffer2(pane);
+		if(pressedStart == false){
+		if(firstMap != null){
+			try {
+				firstMap.paintBuffer2(pane);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();}
+		}
+		if (startButton != null){
+			try {
+				startButton.paintBuffer(pane);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}}		//		(if instantiated)
+		if (optionsButton != null){
+			//try {
+				optionsButton.paintBuffer2(pane);
+		//	} catch (IOException e) {
+				// TODO Auto-generated catch block
+		//		e.printStackTrace();}
+			}
+		if (creditsButton != null){
+			//try {
+				creditsButton.paintBuffer2(pane);
+			//} catch (IOException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			//}
+		}
+		}
+		//if (world != null)			//	
+			//world.paintBuffer(pane);		//		(if instantiated)
+		if(showCredits){
+			pane.setColor(Color.darkGray);
+			pane.fillRect(100, 400, 600, 200);
+			pane.setColor(Color.BLACK);
+			//x range (100 - 700)
+			//y range (400-600)
+			for(int i =0;i<credits.length;i++){
+			if(credits[i]!=null)
+				credits[i].paintBuffer(pane);
+			if((i+1)<credits.length && credits[i+1]!=null)credits[i+1].act();
+			}
+
+
+
+
+
+
+
+		}
+		if(pressedStart){
+			if(firstMap != null)
+			{
+				try {
+					firstMap.paintBuffer(pane);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		if(player != null)
+			try {
+				player.paintBuffer(pane);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		for(int i = 0; i<bullet.length;i++){
+			if(bullet[i] !=null)
+				bullet[i].paintBuffer(pane);
+		}
+		for(int i = 0; i<baddie.length;i++){
+			if(baddie[i] !=null)	
+			try {
+				baddie[i].paintBuffer(pane);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			
+		}
+		if(newPickup != null){
+			try {
+				newPickup.paintBuffer(pane);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}}
+		pane.setFont( new Font( "Monospaced", Font.BOLD, 24 ) );
+		pane.drawString(""+score+"",50,50);
+
+
+		}
+
+	}
+
+
+
+
+
+
+
+
+//	mouseClicked:	invoked when the mouse button is pressed and released at the
+//					same location.
+//	mousePressed:	invoked when the mouse button is pressed down
+//	mouseReleased:	invoked when the mouse button is released
+//	mouseEntered:	invoked when the mouse pointer moves into a component
+//					(i.e., the Frame)
+//	mouseExited:	invoked when the mouse pointer moves out of a component
+
+	public void mouseClicked(MouseEvent event)
+	{
+		//check();								//	Handle the mouse click
+	}
+
+	public void mousePressed(MouseEvent event)
+	{
+		lastX = event.getX();					//	Update the mouse location
+		lastY = event.getY();
+		check();
+		//flipWhenInside();						//	Flip any button hit by the mouse
+	}
+
+	public void mouseReleased(MouseEvent event)
+	{
+		//flipWhenInside();
+	}
+
+	public void mouseEntered(MouseEvent event) {}
+	public void mouseExited(MouseEvent event) {}
+
+	private void flipWhenInside()
+	{
+		if (startButton.isInside(lastX, lastY))
+			startButton.flip();
+		repaint();
+	}
+
+
+	/**How do? This is supposed to listen for keyboard action
+	 * 
+	 */
+	@Override
+	public void keyPressed(KeyEvent arg0) {
+		int key = arg0.getKeyCode();
+		if(key== KeyEvent.VK_SPACE){
+			player.setX(220);
+			player.setY(120);
+		}
+		if (key == KeyEvent.VK_A) {
+			player.setXVelocity(-1);
+	    }
+
+	    if (key == KeyEvent.VK_D) {
+	    	player.setXVelocity(1);
+	    }
+
+	    if (key == KeyEvent.VK_W) {
+	    	player.setYVelocity(-1);
+	    }
+
+	    if (key == KeyEvent.VK_S) {
+	    	player.setYVelocity(1);
+	    }
+	    if (key == KeyEvent.VK_P) {
+	    	pause=true;
+
+	    }if (key == KeyEvent.VK_ENTER) {
+	    	pause=false;
+
+	    }
+		//repaint();
+	}
+
+	@Override
+	public void keyReleased(KeyEvent arg0) {
+		int key = arg0.getKeyCode();
+		if(key == KeyEvent.VK_SPACE){
+			player.setX(120);
+			player.setY(120);
+		}
+		if (key == KeyEvent.VK_A) {
+			player.setXVelocity(0);
+	    }
+
+	    if (key == KeyEvent.VK_D) {
+	    	player.setXVelocity(0);
+	    }
+
+	    if (key == KeyEvent.VK_W) {
+	    	player.setYVelocity(0);
+	    }
+
+	    if (key == KeyEvent.VK_S) {
+	    	player.setYVelocity(0);
+	    }
+
+	}
+
+	@Override
+	public void keyTyped(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+}
